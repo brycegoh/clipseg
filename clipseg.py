@@ -109,7 +109,10 @@ class CLIPSeg:
         Returns:
             Tuple[torch.Tensor, torch.Tensor, torch.Tensor]: The segmentation mask, the heatmap mask, and the binarized mask.
         """
-
+        print("prompt:", text)
+        print("blur:", blur)
+        print("threshold:", threshold)
+        print("dilation_factor:", dilation_factor)
         # Convert the Tensor to a PIL image
         image_np = tensor_to_numpy(image)
         # Create a PIL image from the numpy array
@@ -119,7 +122,7 @@ class CLIPSeg:
         model = CLIPSegForImageSegmentation.from_pretrained("CIDAS/clipseg-rd64-refined")
         
         prompt = text
-        print(prompt)
+        
         input_prc = processor(text=prompt, images=[i], return_tensors="pt")
         
         # Predict the segemntation mask
@@ -129,6 +132,10 @@ class CLIPSeg:
         # see https://huggingface.co/blog/clipseg-zero-shot
         preds = outputs.logits.unsqueeze(1)
         tensor = torch.sigmoid(preds[0][0]) # get the mask
+        # print true/false if tensor has non zero values
+        print("tensor has non zero values:", torch.any(tensor > 0))
+        # print unique non zero values
+        print("unique values in tensor:", torch.unique(tensor))
         # Apply a threshold to the original tensor to cut off low values
         thresh = threshold
         tensor_thresholded = torch.where(tensor > thresh, tensor, torch.tensor(0, dtype=torch.float))
